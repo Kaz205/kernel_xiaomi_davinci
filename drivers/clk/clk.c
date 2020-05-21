@@ -2989,79 +2989,6 @@ DEFINE_SIMPLE_ATTRIBUTE(clock_enable_fops, clock_debug_enable_get,
 			clock_debug_enable_set, "%lld\n");
 
 /*
- * clock_debug_print_enabled_debug_suspend() - Print names of enabled clocks
- * during suspend.
- */
-static void clock_debug_print_enabled_debug_suspend(struct seq_file *s)
-{
-	struct clk_core *core;
-	int cnt = 0;
-
-	if (!mutex_trylock(&clk_debug_lock))
-		return;
-
-	clock_debug_output(s, 0, "Enabled clocks:\n");
-
-	hlist_for_each_entry(core, &clk_debug_list, debug_node) {
-		if (!core || !core->prepare_count)
-			continue;
-
-		if (core->vdd_class)
-			clock_debug_output(s, 0, " %s:%u:%u [%ld, %d]",
-					core->name, core->prepare_count,
-					core->enable_count, core->rate,
-					clk_find_vdd_level(core, core->rate));
-
-		else
-			clock_debug_output(s, 0, " %s:%u:%u [%ld]",
-					core->name, core->prepare_count,
-					core->enable_count, core->rate);
-		cnt++;
-	}
-
-	mutex_unlock(&clk_debug_lock);
-
-	if (cnt)
-		clock_debug_output(s, 0, "Enabled clock count: %d\n", cnt);
-	else
-		clock_debug_output(s, 0, "No clocks enabled.\n");
-}
-
-static int clock_debug_print_clock(struct clk_core *c, struct seq_file *s)
-{
-	char *start = "";
-	struct clk *clk;
-
-	if (!c || !c->prepare_count)
-		return 0;
-
-	clk = c->hw->clk;
-
-	clock_debug_output(s, 0, "\t");
-
-	do {
-		if (clk->core->vdd_class)
-			clock_debug_output(s, 1, "%s%s:%u:%u [%ld, %d]", start,
-					clk->core->name,
-					clk->core->prepare_count,
-					clk->core->enable_count,
-					clk->core->rate,
-				clk_find_vdd_level(clk->core, clk->core->rate));
-		else
-			clock_debug_output(s, 1, "%s%s:%u:%u [%ld]", start,
-					clk->core->name,
-					clk->core->prepare_count,
-					clk->core->enable_count,
-					clk->core->rate);
-		start = " -> ";
-	} while ((clk = clk_get_parent(clk)));
-
-	clock_debug_output(s, 1, "\n");
-
-	return 1;
-}
-
-/*
  * clock_debug_print_enabled_clocks() - Print names of enabled clocks
  */
 static void clock_debug_print_enabled_clocks(struct seq_file *s)
@@ -3075,7 +3002,6 @@ static void clock_debug_print_enabled_clocks(struct seq_file *s)
 	clock_debug_output(s, 0, "Enabled clocks:\n");
 
 	hlist_for_each_entry(core, &clk_debug_list, debug_node)
-		cnt += clock_debug_print_clock(core, s);
 
 	mutex_unlock(&clk_debug_lock);
 
@@ -3452,8 +3378,6 @@ void clock_debug_print_enabled(bool print_parent)
 
 	if (print_parent)
 		clock_debug_print_enabled_clocks(NULL);
-	else
-		clock_debug_print_enabled_debug_suspend(NULL);
 }
 EXPORT_SYMBOL_GPL(clock_debug_print_enabled);
 
