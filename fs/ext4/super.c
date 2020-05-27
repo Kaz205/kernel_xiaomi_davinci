@@ -4397,7 +4397,7 @@ no_journal:
 	}
 
 	block = ext4_count_free_clusters(sb);
-	ext4_free_blocks_count_set(sbi->s_es,
+	ext4_free_blocks_count_set(sbi->s_es, 
 				   EXT4_C2B(sbi, block));
 	ext4_superblock_csum_set(sb);
 	err = percpu_counter_init(&sbi->s_freeclusters_counter, block,
@@ -5130,7 +5130,7 @@ static void ext4_umount_end(struct super_block *sb, int flags)
 	 * next boot.
 	 */
 	if ((flags & MNT_FORCE) || atomic_read(&sb->s_active) > 1) {
-			ext4_msg(sb, KERN_ERR,
+		ext4_msg(sb, KERN_ERR,
 			"errors=remount-ro for active namespaces on umount %x",
 						flags);
 		clear_opt(sb, ERRORS_PANIC);
